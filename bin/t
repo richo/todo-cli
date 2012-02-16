@@ -1,0 +1,37 @@
+#!/bin/sh
+todo=${TODO_PATH:-~/TODO}
+export GIT_DIR=$todo/.git
+
+commit=no
+
+push_upstream () {
+    return 1
+    # Until committing is unboarked
+    if git push >/dev/null 2>&1; then
+        echo "Pushed $note." >&2
+    else
+        echo "Failed to push $note." >&2
+    fi
+}
+
+while getopts ch o
+do
+    case "$o" in
+        c) commit=yes;;
+        [?]|h) echo >&2 "Usage: $0 [-c] todo_item item text [...]"
+             exit 1;;
+    esac
+done
+shift $(($OPTIND-1))
+
+
+note=$todo/$1.todo; shift
+
+echo $@ >> $note
+
+if [ "$commit" = "yes" ]; then
+    git add $note
+    git commit -m "t: $note" $note
+    push_upstream &
+fi
+
